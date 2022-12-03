@@ -1,5 +1,5 @@
-from src.models.model import FileStorage
-from src.schemas.model import FileStorageCreate
+from models.model import FileStorage
+from schemas.schemas import FileStorageCreate
 from .base import RepositoryDB
 
 

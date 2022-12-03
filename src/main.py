@@ -1,11 +1,12 @@
 from fastapi.responses import ORJSONResponse
 import uvicorn
 from fastapi import FastAPI
-from src.api import base
-from src.core.config import app_settings
-from src.users.manager import auth_backend
-from src.users.schemas import UserRead, UserCreate, UserUpdate
-from src.users.manager import fastapi_users
+from api.v1 import base
+from api.v1 import healthcheck
+from core.config import app_settings
+from users.manager import auth_backend
+from schemas.schemas_user import UserRead, UserCreate, UserUpdate
+from users.manager import fastapi_users
 
 
 app = FastAPI(
@@ -33,6 +34,7 @@ app.include_router(
     tags=['users'],
 )
 
+app.include_router(healthcheck.router, prefix='/api/v1')
 app.include_router(base.router, prefix='/api/v1')
 
 if __name__ == "__main__":

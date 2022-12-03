@@ -1,4 +1,5 @@
 import uuid
+import logging.config
 from zipfile import ZipFile
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -10,9 +11,15 @@ from typing import Generic, Type, TypeVar
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from sqlalchemy import select
-from src.db.db import Base
-from src.models.model import User
-from src.db.redisdb import connection
+from db.db import Base
+from models.model import User
+from db.redisdb import connection
+from core.logging import LOGGING
+
+
+logging.config.dictConfig(LOGGING)
+logger = logging.getLogger('api_logger')
+
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -29,7 +36,7 @@ class Repository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_multi(self, *args, **kwargs):
+    def get_list(self, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
@@ -42,21 +49,19 @@ class RepositoryDB(Repository, Generic[ModelType, CreateSchemaType]):
         self._model = model
 
     async def get_by_uuid(self, db: AsyncSession, user: User, path: str) -> str:
-        key = await connection.get(str(path))
-        if key is not None:
-            return key
+        cache = await connection.get(str(path))
+        if cache is not None:
+            return cache
         statement = select(self._model).where(self._model.id == path)
         obj = await db.scalar(statement=statement)
-        result = f'{user.id}/{obj.path}/{obj.name}'
-        return result
+        return obj
 
     async def get_by_path(self, db: AsyncSession, user: User, path: str) -> str:
         statement = select(self._model).where(self._model.path == path)
         obj = await db.scalar(statement=statement)
-        result = f'{user.id}/{obj.path}/{obj.name}'
-        return result
+        return obj
 
-    async def get_multi(self, db: AsyncSession, user: User) -> ModelType:
+    async def get_list(self, db: AsyncSession, user: User) -> ModelType:
         statement = select(self._model).where(self._model.owner == user.id)
         result = await db.execute(statement=statement)
         response = result.fetchall()
@@ -68,6 +73,7 @@ class RepositoryDB(Repository, Generic[ModelType, CreateSchemaType]):
         path = f'{user.id}/{path}'
         for file in Path(path).iterdir():
             files.append(f'{file}')
+        #мы же здесь просто создаем новый файл, который будет скачен
         with ZipFile('archive.zip', "w") as zip:
             for file in files:
                 zip.write(file)
@@ -81,12 +87,18 @@ class RepositoryDB(Repository, Generic[ModelType, CreateSchemaType]):
         path = Path(folder)
         if not Path.exists(path):
             Path(path).mkdir(parents=True, exist_ok=True)
-        async with aiofiles.open(Path(path, name), 'wb') as buffer:
-            await buffer.write(content)
+        try:
+            async with aiofiles.open(Path(path, name), 'wb') as buffer:
+                await buffer.write(content)
+        except Exception as e:
+            logging.warning(f'file has not been saved. Exeption - {e}')
 
     async def save_redis(self, file_id: uuid.UUID, path: str, name: str) -> None:
         full_path = path+'/'+name
-        await connection.set(str(file_id), full_path, ex=3600)
+        try:
+            await connection.set(str(file_id), full_path, ex=3600)
+        except Exception as e:
+            logging.warning(f'file has not been added to cache. Exeption - {e}')
 
     async def create(self, db: AsyncSession, user: User, *, file: UploadFile = File(), path: str) -> ModelType:
         content = file.file.read()
@@ -99,8 +111,12 @@ class RepositoryDB(Repository, Generic[ModelType, CreateSchemaType]):
             owner=user.id
         )
         await self.save_file(user=user, path=path, content=content, name=name)
-        db.add(db_obj)
-        await db.commit()
-        await db.refresh(db_obj)
+        try:
+            db.add(db_obj)
+            await db.commit()
+            await db.refresh(db_obj)
+        except Exception as e:
+            logging.warning(f'file has not been added to db. Exeption - {e}')
+            return e
         await self.save_redis(file_id=db_obj.id, path=path, name=name)
         return db_obj

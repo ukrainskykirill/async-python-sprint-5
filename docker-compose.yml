@@ -6,7 +6,7 @@ services:
     image: postgres:14.5
     restart: always
     expose:
-      - 5432
+      - ${POSTGRES_PORT}
     env_file:
       - ./.env
     volumes:
@@ -16,14 +16,14 @@ services:
     image: redis:6.2-alpine
     restart: always
     expose:
-      - 6379
+      - ${REDIS_PORT}
 
 
   web-server:
     build: .
-    command: bash -c "cd /code && alembic upgrade head && uvicorn src.main:app --host 0.0.0.0 --port 8080"
+    command: bash -c "cd /code/src && alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8080"
     ports:
-      - 8080:8080
+      - ${WEB_SERVER_PORT}:${WEB_SERVER_PORT}
     env_file:
       - ./.env
     depends_on:
@@ -37,4 +37,4 @@ services:
     depends_on:
       - web-server
     ports:
-      - "80:80"
+      - ${NGINX_PORT}

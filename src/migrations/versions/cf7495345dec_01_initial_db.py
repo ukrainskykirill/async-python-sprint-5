@@ -1,8 +1,8 @@
 """01_initial-db
 
-Revision ID: ecc02a4a32e9
+Revision ID: cf7495345dec
 Revises: 
-Create Date: 2022-12-02 06:31:41.932527
+Create Date: 2022-12-03 03:16:11.422682
 
 """
 import fastapi_users_db_sqlalchemy
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'ecc02a4a32e9'
+revision = 'cf7495345dec'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -26,14 +26,14 @@ def upgrade() -> None:
     sa.Column('is_superuser', sa.Boolean(), nullable=False),
     sa.Column('is_verified', sa.Boolean(), nullable=False),
     sa.Column('id', fastapi_users_db_sqlalchemy.generics.GUID(), nullable=False),
-    sa.Column('username', sa.String(), nullable=True),
+    sa.Column('username', sa.String(length=50), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_user_email'), 'user', ['email'], unique=True)
     op.create_table('filestorage',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-    sa.Column('name', sa.String(), nullable=True),
-    sa.Column('path', sa.String(), nullable=True),
+    sa.Column('name', sa.String(length=100), nullable=True),
+    sa.Column('path', sa.Text(), nullable=True),
     sa.Column('size', sa.Integer(), nullable=True),
     sa.Column('is_downloadable', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),

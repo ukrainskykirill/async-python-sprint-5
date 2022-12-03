@@ -1,16 +1,14 @@
 import logging.config
 from uuid import UUID
-import time
 from fastapi import APIRouter, Depends, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-import src.schemas.model as schema
-from src.db.db import get_session
-from src.core.logging import LOGGING
-from src.models.model import User
-from src.services.file_upload import file_crud
+import schemas.schemas as schema
+from db.db import get_session
+from core.logging import LOGGING
+from models.model import User
+from services.file_upload import file_crud
 from fastapi.responses import FileResponse
-from src.users.manager import current_user
-from src.db.redisdb import connection
+from users.manager import current_user
 
 router = APIRouter()
 
@@ -18,38 +16,18 @@ logging.config.dictConfig(LOGGING)
 logger = logging.getLogger('api_logger')
 
 
-@router.get('/ping')
-async def ping(
-        *,
-        db: AsyncSession = Depends(get_session)
-) -> any:
-    try:
-        start1 = time.time()
-        await connection.ping()
-        finish2 = time.time() - start1
-        start = time.time()
-        conn = await db.connection()
-        finish = time.time() - start
-        if conn:
-            logger.info('DB connection access established')
-            return {
-                'DB connection ping': f'{finish}',
-                'Redis ping': f'{finish2}'
-            }
-    except Exception:
-        logger.warning('DB coonection has no access')
-        return {'DB connection or Redis': 'No access'}
-
-
-@router.get('/files/list', response_model=schema.Multi)
+@router.get('/files/list')
 async def list_files(
         *,
         db: AsyncSession = Depends(get_session),
         user: User = Depends(current_user)
 ) -> any:
-    response = await file_crud.get_multi(db=db, user=user)
+    response = await file_crud.get_list(db=db, user=user)
     logger.info('Created list of files for user')
+    typ = type(response)
+    print(f'type - {typ}')
     return {'owner': str(user.id), "files": response}
+
 
 
 @router.get('/files/download')
@@ -65,13 +43,16 @@ async def files_download(
         logger.info('Downloading zip')
         return file
     try:
+        #здесь идет проверка, пришел нам uuid или путь, если путь, то мы попадаем в эксепшн и работаем там
         if UUID(path):
             logger.info('Downloading file by uuid')
-            path = await file_crud.get_by_uuid(db=db, path=path, user=user)
+            obj = await file_crud.get_by_uuid(db=db, path=path, user=user)
+            path = f'{user.id}/{obj.path}/{obj.name}'
             return FileResponse(path=path, media_type="application/octet-stream")
     except Exception:
-        path = await file_crud.get_by_path(db=db, user=user, path=path)
         logger.info('Downloading file by path')
+        obj = await file_crud.get_by_path(db=db, user=user, path=path)
+        path = f'{user.id}/{obj.path}/{obj.name}'
         return FileResponse(path=path, media_type="application/octet-stream")
 
 
