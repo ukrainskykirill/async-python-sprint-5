@@ -16,7 +16,7 @@ logging.config.dictConfig(LOGGING)
 logger = logging.getLogger('api_logger')
 
 
-@router.get('/files/list')
+@router.get('/files/list', response_model=schema.GetList)
 async def list_files(
         *,
         db: AsyncSession = Depends(get_session),
@@ -24,10 +24,7 @@ async def list_files(
 ) -> any:
     response = await file_crud.get_list(db=db, user=user)
     logger.info('Created list of files for user')
-    typ = type(response)
-    print(f'type - {typ}')
-    return {'owner': str(user.id), "files": response}
-
+    return response
 
 
 @router.get('/files/download')
@@ -66,4 +63,6 @@ async def files_upload(
 ) -> any:
     file_obj = await file_crud.create(db=db, user=user, file=file, path=path)
     logger.info('Uploading file')
+    print(f'type - {type(file_obj)}')
     return file_obj
+

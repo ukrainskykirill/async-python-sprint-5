@@ -17,19 +17,24 @@ async def ping(
         start_time = time.time()
         await connection.ping()
         finish_time = time.time() - start_time
-        start = time.time()
+        redis_ping = {f'{finish_time}'}
     except Exception:
         logger.warning('Redis coonection has no access')
-        return {'Redis': 'No access'}
+        redis_ping = 'No access'
     try:
+        start = time.time()
         conn = await db.connection()
-        finish = time.time() - start
+        db_ping = time.time() - start
         if conn:
             logger.info('DB connection access established')
             return {
-                'DB connection ping': f'{finish}',
-                'Redis ping': f'{finish_time}'
+                'DB connection': f'{db_ping}',
+                'Redis': f'{redis_ping}'
             }
     except Exception:
-        logger.warning('DB coonection has no access')
-        return {'DB connection or Redis': 'No access'}
+        db_ping = 'No access'
+        logger.warning(f'DB connection-{db_ping}, Redis - {redis_ping}')
+        return {
+            'DB connection': f'{db_ping}',
+            'Redis': f'{redis_ping}'
+        }

@@ -12,6 +12,7 @@ class AppSettings(BaseSettings):
     secret: str
     redis_port: int
     redis_host: str
+    zip: str
 
     class Config:
         env_file = '.env'

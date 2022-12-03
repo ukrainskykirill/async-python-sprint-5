@@ -15,6 +15,7 @@ from db.db import Base
 from models.model import User
 from db.redisdb import connection
 from core.logging import LOGGING
+from core.config import app_settings
 
 
 logging.config.dictConfig(LOGGING)
@@ -61,11 +62,14 @@ class RepositoryDB(Repository, Generic[ModelType, CreateSchemaType]):
         obj = await db.scalar(statement=statement)
         return obj
 
-    async def get_list(self, db: AsyncSession, user: User) -> ModelType:
+    async def get_list(self, db: AsyncSession, user: User) -> list[ModelType]:
+        obj_list = []
         statement = select(self._model).where(self._model.owner == user.id)
         result = await db.execute(statement=statement)
         response = result.fetchall()
-        return response
+        for i in response:
+            obj_list.append(i[0])
+        return obj_list
 
     async def zip_create(self, user: User, path: str):
         files = []
@@ -73,8 +77,7 @@ class RepositoryDB(Repository, Generic[ModelType, CreateSchemaType]):
         path = f'{user.id}/{path}'
         for file in Path(path).iterdir():
             files.append(f'{file}')
-        #мы же здесь просто создаем новый файл, который будет скачен
-        with ZipFile('archive.zip', "w") as zip:
+        with ZipFile(Path(path, app_settings.zip), "w") as zip:
             for file in files:
                 zip.write(file)
         return StreamingResponse(

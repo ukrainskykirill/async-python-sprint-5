@@ -2,8 +2,8 @@ import uuid
 from datetime import datetime
 from pydantic import BaseModel
 
-#это разве не стандартный набор схем на создание, обновление, возврат клиенту
-#пускай они сейчас и не расширяют функционал, но могут пригодиться
+#мы же все равно используем эти схемы для создания, обновления, возврата клиенту и тд, каждая отвечает за свое
+#было бы не правильно все возложить только на базовую?
 
 
 class FileStorageBase(BaseModel):
@@ -11,10 +11,6 @@ class FileStorageBase(BaseModel):
 
 
 class FileStorageCreate(FileStorageBase):
-    pass
-
-
-class FileStorageUpdate(FileStorageBase):
     pass
 
 
@@ -36,3 +32,7 @@ class FileStorage(FileStorageInDBBase):
 
 class FileStorageInDB(FileStorageInDBBase):
     pass
+
+
+class GetList(BaseModel):
+    __root__: list[FileStorage]
