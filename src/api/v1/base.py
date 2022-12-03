@@ -1,13 +1,15 @@
 import logging.config
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, status, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+
 import schemas.schemas as schema
-from db.db import get_session
 from core.logging import LOGGING
+from db.db import get_session
 from models.model import User
 from services.file_upload import file_crud
-from fastapi.responses import FileResponse
 from users.manager import current_user
 
 router = APIRouter()

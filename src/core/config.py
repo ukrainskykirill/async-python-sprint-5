@@ -1,5 +1,5 @@
-from pydantic import BaseSettings, PostgresDsn
 from dotenv import load_dotenv
+from pydantic import BaseSettings, PostgresDsn
 
 load_dotenv()
 

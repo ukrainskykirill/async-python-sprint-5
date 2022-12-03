@@ -1,12 +1,15 @@
 import time
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from api.v1.base import logger
 from db.db import get_session
 from db.redisdb import connection
 
 
 router = APIRouter()
+
 
 @router.get('/ping')
 async def ping(

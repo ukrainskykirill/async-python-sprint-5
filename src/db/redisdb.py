@@ -1,4 +1,5 @@
 from redis import asyncio as aioredis
+
 from core.config import app_settings
 
 connection = aioredis.Redis(

@@ -1,12 +1,14 @@
 import logging.config
-from fastapi_users.authentication import AuthenticationBackend, BearerTransport, JWTStrategy, CookieTransport
 import uuid
 from typing import Optional
+
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, UUIDIDMixin, FastAPIUsers
+from fastapi_users.authentication import AuthenticationBackend, BearerTransport, JWTStrategy, CookieTransport
+
+from core.config import app_settings
 from core.logging import LOGGING
 from models.model import User, get_user_db
-from core.config import app_settings
 
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger('api_logger')

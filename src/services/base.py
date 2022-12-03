@@ -1,22 +1,23 @@
-import uuid
 import logging.config
-from zipfile import ZipFile
+import uuid
 from abc import ABC, abstractmethod
-from pathlib import Path
 from io import BytesIO
-import aiofiles
-from fastapi.responses import StreamingResponse
-from fastapi import UploadFile, File
+from pathlib import Path
 from typing import Generic, Type, TypeVar
-from sqlalchemy.ext.asyncio import AsyncSession
+from zipfile import ZipFile
+
+import aiofiles
+from fastapi import UploadFile, File
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import select
-from db.db import Base
-from models.model import User
-from db.redisdb import connection
-from core.logging import LOGGING
-from core.config import app_settings
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import app_settings
+from core.logging import LOGGING
+from db.db import Base
+from db.redisdb import connection
+from models.model import User
 
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger('api_logger')

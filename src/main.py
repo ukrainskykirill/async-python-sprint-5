@@ -1,13 +1,13 @@
-from fastapi.responses import ORJSONResponse
 import uvicorn
 from fastapi import FastAPI
+from fastapi.responses import ORJSONResponse
+
 from api.v1 import base
 from api.v1 import healthcheck
 from core.config import app_settings
-from users.manager import auth_backend
 from schemas.schemas_user import UserRead, UserCreate, UserUpdate
+from users.manager import auth_backend
 from users.manager import fastapi_users
-
 
 app = FastAPI(
     title=app_settings.app_title,
